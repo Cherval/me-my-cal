@@ -175,7 +175,7 @@ export default function App() {
     });
     if (error) {
       setAddError(error.message);
-      return;
+      throw error;
     }
     fetchTransactions();
   }
@@ -191,7 +191,7 @@ export default function App() {
     const { error } = await supabase.from("transactions").delete().eq("id", id);
     if (error) {
       setDeleteError(error.message);
-      return;
+      throw error;
     }
     fetchTransactions();
   }
@@ -207,7 +207,7 @@ export default function App() {
     const { error } = await supabase.from("transactions").update(updates).eq("id", id);
     if (error) {
         alert("บันทึกไม่สำเร็จ: " + error.message);
-        return;
+        throw error;
     }
     fetchTransactions();
   }

@@ -13,7 +13,7 @@ interface Props {
     party: string;
     item: string;
     location: string;
-  }) => void;
+  }) => Promise<void> | void;
 }
 
 const CATEGORIES_INCOME: { value: string; label: string }[] = [
@@ -67,6 +67,7 @@ export default function AddForm(props: Props) {
   const [categoryOther, setCategoryOther] = createSignal("");
   const [note, setNote] = createSignal("");
   const [emoji, setEmoji] = createSignal("💰");
+  const [isSubmitting, setIsSubmitting] = createSignal(false);
   
   // New States
   const [method, setMethod] = createSignal("");
@@ -81,41 +82,48 @@ export default function AddForm(props: Props) {
     return type() === "income" ? CATEGORIES_INCOME : CATEGORIES_EXPENSE;
   }
 
-  function submit(e: Event) {
+  async function submit(e: Event) {
     e.preventDefault();
+    if (isSubmitting()) return;
+
     const num = parseFloat(amount().replace(/,/g, ""));
     if (!Number.isFinite(num) || num <= 0) return;
     
-    // Process "Other" fields
-    const finalCategory = category() === OTHER_VALUE ? categoryOther().trim() || "อื่นๆ" : category();
-    const finalMethod = method() === OTHER_VALUE ? methodOther().trim() || "อื่นๆ" : method();
-    const finalBank = bank() === OTHER_VALUE ? bankOther().trim() || "อื่นๆ" : bank();
+    setIsSubmitting(true);
+    try {
+      // Process "Other" fields
+      const finalCategory = category() === OTHER_VALUE ? categoryOther().trim() || "อื่นๆ" : category();
+      const finalMethod = method() === OTHER_VALUE ? methodOther().trim() || "อื่นๆ" : method();
+      const finalBank = bank() === OTHER_VALUE ? bankOther().trim() || "อื่นๆ" : bank();
 
-    props.onAdd({
-      type: type(),
-      amount: num,
-      category: finalCategory,
-      note: note().trim(),
-      emoji: emoji(),
-      method: finalMethod,
-      bank: finalBank,
-      party: party().trim(),
-      item: item().trim(),
-      location: location().trim(),
-    });
-    
-    // Reset Form
-    setAmount("");
-    setCategory("");
-    setCategoryOther("");
-    setNote("");
-    setMethod("");
-    setMethodOther("");
-    setBank("");
-    setBankOther("");
-    setParty("");
-    setItem("");
-    setLocation("");
+      await props.onAdd({
+        type: type(),
+        amount: num,
+        category: finalCategory,
+        note: note().trim(),
+        emoji: emoji(),
+        method: finalMethod,
+        bank: finalBank,
+        party: party().trim(),
+        item: item().trim(),
+        location: location().trim(),
+      });
+      
+      // Reset Form
+      setAmount("");
+      setCategory("");
+      setCategoryOther("");
+      setNote("");
+      setMethod("");
+      setMethodOther("");
+      setBank("");
+      setBankOther("");
+      setParty("");
+      setItem("");
+      setLocation("");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -315,9 +323,10 @@ export default function AddForm(props: Props) {
 
       <button
         type="submit"
-        class="w-full py-3.5 rounded-xl font-semibold bg-[var(--accent)] hover:opacity-90 transition"
+        disabled={isSubmitting()}
+        class="w-full py-3.5 rounded-xl font-semibold bg-[var(--accent)] hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        บันทึก
+        {isSubmitting() ? "กำลังบันทึก..." : "บันทึก"}
       </button>
     </form>
   );

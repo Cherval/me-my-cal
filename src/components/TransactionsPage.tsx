@@ -9,8 +9,8 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface Props {
   transactions: Transaction[];
-  onUpdate: (id: string, updates: Partial<Transaction>) => void;
-  onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Transaction>) => Promise<void> | void;
+  onDelete: (id: string) => Promise<void> | void;
 }
 
 // Categories
@@ -67,17 +67,24 @@ export default function TransactionsPage(props: Props) {
   // Delete Modal State
   const [showDeleteModal, setShowDeleteModal] = createSignal(false);
   const [deleteId, setDeleteId] = createSignal<string | null>(null);
+  const [isDeleting, setIsDeleting] = createSignal(false);
 
   // Edit Modal State
   const [showEditModal, setShowEditModal] = createSignal(false);
   const [editRow, setEditRow] = createSignal<Transaction | null>(null);
+  const [isSaving, setIsSaving] = createSignal(false);
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const id = deleteId();
-    if (id) {
-      props.onDelete(id);
-      setShowDeleteModal(false);
-      setDeleteId(null);
+    if (id && !isDeleting()) {
+      setIsDeleting(true);
+      try {
+        await props.onDelete(id);
+        setShowDeleteModal(false);
+        setDeleteId(null);
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -91,25 +98,30 @@ export default function TransactionsPage(props: Props) {
     setShowEditModal(true);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     const row = editRow();
-    if (row) {
-      const updates: Partial<Transaction> = {};
-      if (row.created_at) updates.created_at = row.created_at;
-      if (row.type) updates.type = row.type;
-      if (row.category !== undefined) updates.category = row.category || '';
-      if (row.amount !== undefined) updates.amount = Number(row.amount);
-      if (row.note !== undefined) updates.note = row.note || null;
-      if (row.bank !== undefined) updates.bank = row.bank || null;
-      if (row.method !== undefined) updates.method = row.method || null;
-      if (row.party !== undefined) updates.party = row.party || null;
-      if (row.item !== undefined) updates.item = row.item || null;
-      if (row.location !== undefined) updates.location = row.location || null;
-      if (row.emoji !== undefined) updates.emoji = row.emoji || null;
-      
-      props.onUpdate(row.id, updates);
-      setShowEditModal(false);
-      setEditRow(null);
+    if (row && !isSaving()) {
+      setIsSaving(true);
+      try {
+        const updates: Partial<Transaction> = {};
+        if (row.created_at) updates.created_at = row.created_at;
+        if (row.type) updates.type = row.type;
+        if (row.category !== undefined) updates.category = row.category || null;
+        if (row.amount !== undefined) updates.amount = Number(row.amount);
+        if (row.note !== undefined) updates.note = row.note || null;
+        if (row.bank !== undefined) updates.bank = row.bank || null;
+        if (row.method !== undefined) updates.method = row.method || null;
+        if (row.party !== undefined) updates.party = row.party || null;
+        if (row.item !== undefined) updates.item = row.item || null;
+        if (row.location !== undefined) updates.location = row.location || null;
+        if (row.emoji !== undefined) updates.emoji = row.emoji || null;
+        
+        await props.onUpdate(row.id, updates);
+        setShowEditModal(false);
+        setEditRow(null);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -292,15 +304,17 @@ export default function TransactionsPage(props: Props) {
             <div class="flex justify-end gap-3">
               <button 
                 onClick={() => setShowDeleteModal(false)}
-                class="px-4 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+                disabled={isDeleting()}
+                class="px-4 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition disabled:opacity-50"
               >
                 ยกเลิก
               </button>
               <button 
                 onClick={confirmDelete}
-                class="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition"
+                disabled={isDeleting()}
+                class="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
               >
-                ลบรายการ
+                {isDeleting() ? "กำลังลบ..." : "ลบรายการ"}
               </button>
             </div>
           </div>
@@ -442,15 +456,17 @@ export default function TransactionsPage(props: Props) {
             <div class="flex justify-end gap-3 mt-6">
               <button 
                 onClick={() => setShowEditModal(false)}
-                class="px-4 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+                disabled={isSaving()}
+                class="px-4 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition disabled:opacity-50"
               >
                 ยกเลิก
               </button>
               <button 
                 onClick={saveEdit}
-                class="px-4 py-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition"
+                disabled={isSaving()}
+                class="px-4 py-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition disabled:opacity-50"
               >
-                บันทึก
+                {isSaving() ? "กำลังบันทึก..." : "บันทึก"}
               </button>
             </div>
           </div>

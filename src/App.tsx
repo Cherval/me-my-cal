@@ -255,7 +255,8 @@ export default function App() {
             <span>บันทึกรายรับรายจ่าย</span>
         </h1>
         
-        {/* Navigation */}
+        {/* Navigation - only show when logged in */}
+        <Show when={authReady() || demoMode()}>
         <div class="flex bg-white/5 p-1 rounded-lg">
             <button 
                 class={`px-3 py-1 text-sm rounded-md transition ${view() === 'dashboard' ? 'bg-[var(--accent)] text-white' : 'text-[var(--muted)] hover:text-white'}`}
@@ -270,9 +271,11 @@ export default function App() {
                 ตารางข้อมูล
             </button>
         </div>
+        </Show>
 
         <div class="flex-1" />
 
+        <Show when={authReady() || demoMode()}>
         <div class="flex flex-wrap gap-2 items-center">
             {/* Filter Controls */}
              <select 
@@ -319,6 +322,7 @@ export default function App() {
             </button>
             </Show>
         </div>
+        </Show>
       </header>
 
       <Show when={!authReady() && !demoMode()}>

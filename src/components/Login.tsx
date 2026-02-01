@@ -16,9 +16,11 @@ export default function Login(props: Props) {
   async function signInWithGoogle() {
     setMessage(null);
     setLoading(true);
+    // Use VITE_SITE_URL for production, fallback to current origin
+    const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: siteUrl },
     });
     setLoading(false);
     if (error) {

@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0f0f12;
+  --card: #1a1a20;
+  --text: #f4f4f5;
+  --muted: #a1a1aa;
+  --income: #22c55e;
+  --expense: #ef4444;
+  --accent: #8b5cf6;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ตัวเลขใหญ่เด่นชัด + รองรับ emoji ของอุปกรณ์ */
+.amount-display {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.02em;
+}
+
+/* ให้ emoji แสดงขนาดตามอุปกรณ์ */
+.emoji-native {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
